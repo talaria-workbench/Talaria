@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<UseWinUI>true</UseWinUI>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="Resources\image_white_24dp.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Resources\image_white_24dp.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Talaria.AddIn\Talaria.AddIn.csproj" />
+	</ItemGroup>
+
+</Project>

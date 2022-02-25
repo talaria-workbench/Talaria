@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Talaria (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Talaria (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
