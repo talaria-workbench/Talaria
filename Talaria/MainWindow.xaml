@@ -6,97 +6,112 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
     mc:Ignorable="d">
+    <Border>
+        <Border.Resources>
+            <local:MainViewmodel x:Key="mainViewmodel"/>
+        </Border.Resources>
+        <Grid x:Name="root" DataContext="{StaticResource mainViewmodel}">
+            <Grid.Resources>
+            </Grid.Resources>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <controls:TabbedCommandBar Grid.ColumnSpan="2" >
-            <controls:TabbedCommandBar.PaneFooter>
-                <CommandBar Background="Transparent" DefaultLabelPosition="Right">
-                    <AppBarButton Label="Run" Icon="Play" />
-                </CommandBar>
-            </controls:TabbedCommandBar.PaneFooter>
-            <controls:TabbedCommandBar.MenuItems>
-                <controls:TabbedCommandBarItem Header="Start">
-                    <AppBarButton Icon="OpenLocal" Label="Open Project" />
-                    <AppBarButton Icon="Undo" Label="Undo" />
-                </controls:TabbedCommandBarItem>
-            </controls:TabbedCommandBar.MenuItems>
-        </controls:TabbedCommandBar>
-
-
-
-        <TabView x:Name="content" Grid.Row="1" Grid.Column="1" />
-        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <CommandBar Background="Transparent" IsOpen="False" DefaultLabelPosition="Right">
-                <!--<AppBarButton Icon="Add" Label="Add"/>
+            <controls:TabbedCommandBar Grid.ColumnSpan="2" >
+                <controls:TabbedCommandBar.PaneFooter>
+                    <CommandBar Background="Transparent" DefaultLabelPosition="Right">
+                        <AppBarButton Label="Run" Icon="Play" />
+                    </CommandBar>
+                </controls:TabbedCommandBar.PaneFooter>
+                <controls:TabbedCommandBar.MenuItems>
+                    <controls:TabbedCommandBarItem Header="Start">
+                        <AppBarButton Icon="NewFolder" Label="New Project" Command="{Binding CreateNewCommand }" />
+                        <AppBarButton Icon="OpenLocal" Label="Open Project" Command="{Binding OpenCommand}" />
+                        <!--<AppBarButton Icon="Undo" Label="Undo" />-->
+                    </controls:TabbedCommandBarItem>
+                </controls:TabbedCommandBar.MenuItems>
+            </controls:TabbedCommandBar>
+
+
+
+            <TabView x:Name="content" Grid.Row="1" Grid.Column="1" />
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <CommandBar Background="Transparent" IsOpen="False" DefaultLabelPosition="Right">
+                    <!--<AppBarButton Icon="Add" Label="Add"/>
                 <AppBarButton Icon="ReShare" Label="Share"/>
                 <AppBarButton Icon="Edit" Label="Edit"/>-->
-                <AppBarElementContainer>
+                    <AppBarElementContainer>
 
-                    <SplitButton  VerticalAlignment="Top"  >
-                        <SplitButton.DataContext>
-                            <local:NewProjectItemViewmodel x:Name="NewProjectItemViewmodel" />
-                        </SplitButton.DataContext>
-                        <SymbolIcon Symbol="Add"/>
-                        <SplitButton.Flyout>
-                            <Flyout Placement="Bottom">
+                        <SplitButton  VerticalAlignment="Top"  >
+                            <SymbolIcon Symbol="Add"/>
+                            <SplitButton.Flyout>
+                                <Flyout Placement="Bottom">
 
-                                <!-- flyout content -->
-                                <ItemsRepeater ItemsSource="{Binding CreateableItems }">
+                                    <!-- flyout content -->
+                                    <ItemsRepeater ItemsSource="{Binding Project.ProjectItemViewmodel.CreateableItems }">
 
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border x:Name="border">
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border x:Name="border">
 
-                                                <Button  Command="{Binding ExecuteCommand}" >
-                                                    <Button.DataContext>
-                                                        <local:NewProjectItemElementViewmodel CreateItem="{Binding  ElementName=border, Path=DataContext}"/>
-                                                    </Button.DataContext>
+                                                    <Button  Command="{Binding ExecuteCommand}" CommandParameter="{Binding ElementName=mainViewmodelHolder, Path=DataContext.Project.Tree.SelectedEntry}" >
+                                                        <Button.DataContext>
+                                                            <local:NewProjectItemElementViewmodel  Project="{Binding ElementName=mainViewmodelHolder, Path=DataContext.Project}" CreateItem="{Binding  ElementName=border, Path=DataContext}"/>
+                                                        </Button.DataContext>
 
-                                                    <Grid Width="132">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <Image Width="24" Height="24" Margin="0,0,8,0" Source="{Binding CreateItem.Icon }" VerticalAlignment="Center"  HorizontalAlignment="Center"/>
-                                                        <TextBlock  Grid.Column="1" VerticalAlignment="Center" Text="{Binding CreateItem.Label}" ToolTipService.ToolTip="{Binding CreateItem.Label}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ></TextBlock>
-                                                    </Grid>
+                                                        <Grid Width="132">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Image Width="24" Height="24" Margin="0,0,8,0" Source="{Binding CreateItem.Icon }" VerticalAlignment="Center"  HorizontalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding CreateItem.Label}" ToolTipService.ToolTip="{Binding CreateItem.Label}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ></TextBlock>
+                                                            <Border x:Name="mainViewmodelHolder" Width="0" Height="0" DataContext="{StaticResource mainViewmodel}"/>
+                                                        </Grid>
 
-                                                    <!--<SymbolIcon Symbol="Page"/>-->
-                                                </Button>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                                <!--<SymbolIcon Symbol="Add"/>-->
+                                                        <!--<SymbolIcon Symbol="Page"/>-->
+                                                    </Button>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                    <!--<SymbolIcon Symbol="Add"/>-->
 
-                                <!--<AppBarButton Icon="Add" Label="Add"/>-->
-                            </Flyout>
-                        </SplitButton.Flyout>
-                    </SplitButton>
-                </AppBarElementContainer>
-                <CommandBar.SecondaryCommands>
-                    <AppBarButton Icon="Setting" Label="Settings">
-                        <AppBarButton.KeyboardAccelerators>
-                            <KeyboardAccelerator Modifiers="Control" Key="S" />
-                        </AppBarButton.KeyboardAccelerators>
-                    </AppBarButton>
-                </CommandBar.SecondaryCommands>
-            </CommandBar>
-            <TreeView x:Name="explorer" Grid.Row="1"  />
+                                    <!--<AppBarButton Icon="Add" Label="Add"/>-->
+                                </Flyout>
+                            </SplitButton.Flyout>
+                        </SplitButton>
+                    </AppBarElementContainer>
+                    <CommandBar.SecondaryCommands>
+                        <AppBarButton Icon="Setting" Label="Settings">
+                            <AppBarButton.KeyboardAccelerators>
+                                <KeyboardAccelerator Modifiers="Control" Key="S" />
+                            </AppBarButton.KeyboardAccelerators>
+                        </AppBarButton>
+                    </CommandBar.SecondaryCommands>
+                </CommandBar>
+                <TreeView x:Name="explorer" SelectedItem="{Binding Project.Tree.SelectedEntry, Mode=TwoWay}" Grid.Row="1"  ItemsSource="{Binding Project.Root.Childrean, Mode=OneWay}" >
+                    <TreeView.ItemTemplate>
+                        <DataTemplate x:DataType="local:ProjectEntry">
+                            <TreeViewItem ItemsSource="{x:Bind Childrean, Mode=OneWay}"   >
+                                <TextBlock Text="{x:Bind Name}" />
+                            </TreeViewItem>
+                        </DataTemplate>
+                    </TreeView.ItemTemplate>
+
+                </TreeView>
+            </Grid>
+
+            <controls:GridSplitter  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" ResizeDirection="Columns"  CursorBehavior="ChangeOnSplitterHover" Width="16"/>
         </Grid>
-
-        <controls:GridSplitter  Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" ResizeDirection="Columns"  CursorBehavior="ChangeOnSplitterHover" Width="16"/>
-    </Grid>
+    </Border>
 </Window>

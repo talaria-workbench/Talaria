@@ -1,10 +1,11 @@
 ﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media.Imaging;
 
+using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Reflection;
-using System.Collections.Immutable;
 
 namespace Talaria.AddIn;
 
@@ -12,22 +13,57 @@ public interface IEditor
 {
     ReadOnlySpan<string> FileEnding { get; }
     DataTemplate Editor { get; }
-    Task<Object> Open(Stream stream);
+    Task<object> Open(Stream stream);
 
 }
 
-public interface ICreateItem
+public abstract class CreateItemBase
 {
-    string Label { get; }
-    Microsoft.UI.Xaml.Media.ImageSource Icon { get; }
-    Task Execute(IEditorContext context, CreateItemOptions options);
+    public abstract string Label { get; }
+    public abstract Microsoft.UI.Xaml.Media.ImageSource Icon { get; }
+    public abstract Task Execute(CreateItemOptions options);
+    public CreateItemOptions DefaultCreateItemOptions(IEditorContext context) => this.CreateDefaultCreateItemOptions(context);
 
-    CreateItemOptions DefaultCreateItemOptions { get; }
+    protected abstract CreateItemOptions CreateDefaultCreateItemOptions(IEditorContext context);
 
+    protected SvgImageSource LoadSVG(string resourceName, System.Reflection.Assembly? assembly = null)
+    {
+        if (assembly is null) {
+            assembly = this.GetType().Assembly;
+        }
+        var svg = new SvgImageSource();
+        setImage(svg, resourceName, assembly);
+        static async void setImage(SvgImageSource svg, string resourceName, System.Reflection.Assembly assembly)
+        {
+            try {
+                svg.RasterizePixelHeight = 24;
+                svg.RasterizePixelWidth = 24;
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                var status = await svg.SetSourceAsync(stream.AsRandomAccessStream());
+
+            } catch (Exception e) {
+                System.Diagnostics.Debug.WriteLine($"Faild to load Image {e}");
+
+            }
+        }
+
+        return svg;
+    }
 }
 
 public interface IEditorContext
 {
+    IEditorContext Root { get; }
+
+    Task<Stream> CreateFileStream(string path);
+    Task<Stream> OpenFileStream(string path);
+
+    Task CreateFile<T>(string path, T item);
+    Task<T> OpenFile<T>(string path);
+
+
+    bool ExistsFileOrDirectory(string path);
+    Task CreateFolder(string path);
 
 }
 public abstract partial class CreateItemOptions
@@ -39,14 +75,18 @@ public abstract partial class CreateItemOptions
     [SourceGenerators.AutoNotify(SetterVisibility = SourceGenerators.Visibility.Private)]
     private bool isValid;
 
-    public CreateItemOptions()
+    protected virtual bool AdditionalValidationSuccessfull => true;
+
+    public IEditorContext Context { get; }
+
+    public CreateItemOptions(IEditorContext context)
     {
         this.Options = ImmutableArray.Create(this.DefaultOptions());
         foreach (var o in this.Options) {
             o.PropertyChanged += (sender, e) =>
             {
                 System.Diagnostics.Debug.Assert(sender is BaseOption);
-                BaseOption o = ((BaseOption)sender);
+                var o = ((BaseOption)sender);
                 if (e.PropertyName == nameof(Talaria.AddIn.BaseOption.IsValid) && o.IsValid != this.IsValid) {
                     if (o.IsValid) {
                         this.UpdateIsValid();
@@ -57,6 +97,7 @@ public abstract partial class CreateItemOptions
             };
         }
         this.UpdateIsValid();
+        this.Context = context;
     }
 
     public Configuration[] GetConfiguration()
@@ -64,14 +105,18 @@ public abstract partial class CreateItemOptions
         return this.Options.Select(x => x.GetConfiguration()).ToArray();
     }
 
-    private void UpdateIsValid()
+    protected void UpdateIsValid()
     {
         var isValid = true;
-        foreach (var o in this.Options) {
-            if (!o.IsValid) {
-                isValid = false;
-                break;
+        if (this.AdditionalValidationSuccessfull) {
+            foreach (var o in this.Options) {
+                if (!o.IsValid) {
+                    isValid = false;
+                    break;
+                }
             }
+        } else {
+            isValid = false;
         }
         this.IsValid = isValid;
     }
@@ -79,7 +124,7 @@ public abstract partial class CreateItemOptions
 
 public class Configuration
 {
-    protected private Configuration() { }
+    private protected Configuration() { }
 }
 public sealed class Configuration<T> : Configuration
 {
@@ -102,7 +147,7 @@ public abstract class BaseOption : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    protected private BaseOption(string label)
+    private protected BaseOption(string label)
     {
         this.Label = label;
     }
@@ -112,7 +157,7 @@ public abstract class BaseOption : INotifyPropertyChanged
     public abstract bool IsValid { get; }
 
 
-    abstract internal Configuration GetConfiguration();
+    internal abstract Configuration GetConfiguration();
 
     protected void FireNotifyPropertyChanged([CallerMemberName] string propertyName = "") => this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
@@ -123,7 +168,7 @@ public abstract class BaseOption<T> : BaseOption
 
     protected bool IsNullValid => false;
 
-    override internal Configuration GetConfiguration()
+    internal override Configuration GetConfiguration()
     {
         return !this.IsValid
             ? throw new InvalidOperationException($"Can't generate configuration for invalid Option {this.Label}: {(this.value?.ToString() ?? "<NULL>")}")
@@ -132,7 +177,8 @@ public abstract class BaseOption<T> : BaseOption
 
     public virtual T? Value
     {
-        get => this.value; set {
+        get => this.value; set
+        {
             if (!Object.Equals(this.value, value)) {
                 this.value = value;
                 this.FireNotifyPropertyChanged();
@@ -143,13 +189,14 @@ public abstract class BaseOption<T> : BaseOption
 
     public override bool IsValid
     {
-        get {
+        get
+        {
             return this.Value is not null || this.IsNullValid;
         }
     }
 
 
-    protected private BaseOption(T? initialValue, string label) : base(label)
+    private protected BaseOption(T? initialValue, string label) : base(label)
     {
         this.Value = initialValue;
     }
@@ -171,16 +218,17 @@ public sealed class TextOption : BaseOption<string>
         this.forbiddPattern = forbiddPattern;
     }
 
-    public override string? Value { get => base.Value ?? String.Empty; set => base.Value = (this.trim ? value?.Trim() : value); }
+    public override string? Value { get => base.Value ?? string.Empty; set => base.Value = (this.trim ? value?.Trim() : value); }
 
     public override bool IsValid
     {
-        get {
+        get
+        {
             if (!this.allowEmptyText && string.IsNullOrEmpty(this.Value)) {
                 return false;
-            } else if (this.allowPattern is not null && !this.allowPattern.IsMatch(this.Value ?? String.Empty)) {
+            } else if (this.allowPattern is not null && !this.allowPattern.IsMatch(this.Value ?? string.Empty)) {
                 return false;
-            } else if (this.forbiddPattern is not null && this.forbiddPattern.IsMatch(this.Value ?? String.Empty)) {
+            } else if (this.forbiddPattern is not null && this.forbiddPattern.IsMatch(this.Value ?? string.Empty)) {
                 return false;
             } else {
                 return base.IsValid;

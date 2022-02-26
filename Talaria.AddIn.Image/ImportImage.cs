@@ -1,52 +1,71 @@
 ﻿using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 using System.ComponentModel.Composition;
 
-namespace Talaria.AddIn.Image
+namespace Talaria.AddIn.Image;
+
+[Export(typeof(CreateItemBase))]
+public class ImportImage : CreateItemBase
 {
-    [Export(typeof(ICreateItem))]
-    public class ImportImage : ICreateItem
+    public override string Label => "Import Image";
+
+    public override ImageSource Icon { get; }
+
+    public ImportImage()
     {
-        public string Label => "Import Image";
+        var svg = this.LoadSVG("Talaria.AddIn.Image.Resources.image_white_24dp.svg");
+        this.Icon = svg;
+    }
 
-        public ImageSource Icon { get; }
 
-        public ImportImage()
+    protected override CreateItemOptions CreateDefaultCreateItemOptions(IEditorContext context) => new ImageOptions(context);
+
+
+    public override async Task Execute(CreateItemOptions options)
+    {
+        var context = options.Context;
+        var config = options.GetConfiguration();
+        var filename = ((Configuration<string>)config[0]).Value;
+        var source = ((Configuration<FileInfo>)config[1]).Value;
+
+        var filePath = filename + source.Extension;
+        using var destinationStream = await context.CreateFileStream(filePath);
+        using var sourceStream = source.OpenRead();
+        await sourceStream.CopyToAsync(destinationStream);
+    }
+}
+
+public class ImageOptions : CreateItemOptions
+{
+    public ImageOptions(IEditorContext context) : base(context)
+    {
+        this.FilenameOption.PropertyChanged += (_, _) => this.UpdateIsValid();
+        this.ImportImageOption.PropertyChanged += (_, _) => this.UpdateIsValid();
+    }
+
+    private string? Filename => ((TextOption) this.Options[0]).Value;
+    private FileInfo? ImportImage => ((FileOption) this.Options[1]).Value;
+    private TextOption FilenameOption => ((TextOption) this.Options[0]);
+    private FileOption ImportImageOption => ((FileOption) this.Options[1]);
+
+    protected override bool AdditionalValidationSuccessfull
+    {
+        get
         {
-            var svg = new SvgImageSource();
-            setImage(svg);
-            this.Icon = svg;
-            static async void setImage(SvgImageSource svg)
-            {
-                try {
-                    svg.RasterizePixelHeight = 24;
-                    svg.RasterizePixelWidth = 24;
-                    using var stream = typeof(ImportImage).Assembly.GetManifestResourceStream("Talaria.AddIn.Image.Resources.image_white_24dp.svg");
-                    var status = await svg.SetSourceAsync(stream.AsRandomAccessStream());
-                    
-                } catch (Exception e) {
-                    System.Diagnostics.Debug.WriteLine($"Faild to load Image {e}");
-
-                }
+            if (this.Filename is null || this.ImportImage is null) {
+                return false;
+            } else if (this.Filename.IndexOfAny(Path.GetInvalidFileNameChars()) != -1) {
+                return false;
+            } else if (this.Context.ExistsFileOrDirectory(this.Filename + this.ImportImage.Extension)) {
+                return false;
             }
-        }
 
-        public CreateItemOptions DefaultCreateItemOptions { get; } = new ImageOptions();
-
-        public Task Execute(IEditorContext context, CreateItemOptions options)
-        {
-            var config = options.GetConfiguration();
-            return Task.CompletedTask;
+            return base.AdditionalValidationSuccessfull;
         }
     }
 
-    public class ImageOptions : CreateItemOptions
-    {
-
-        protected override BaseOption[] DefaultOptions() => new BaseOption[]{
+    protected override BaseOption[] DefaultOptions() => new BaseOption[]{
             new TextOption("Filename"),
             new FileOption("Import Image", ".png")
         };
-    }
 }
