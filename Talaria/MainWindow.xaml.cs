@@ -1,6 +1,10 @@
 ﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
+using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
+
+using Talaria.AddIn;
 
 using Windows.Storage.Pickers;
 
@@ -18,8 +22,13 @@ public sealed partial class MainWindow : Window
 {
 
     public XamlRoot XamlRoot => this.Content.XamlRoot;
+
+    private readonly ObservableCollection<IEditor> editors=new ();
+    public ReadOnlyObservableCollection<IEditor> Editors { get; }
+
     public MainWindow()
     {
+        this.Editors = new ReadOnlyObservableCollection<IEditor>(this.editors);
         this.InitializeComponent();
     }
 
@@ -68,4 +77,23 @@ public sealed partial class MainWindow : Window
     }
 
     #endregion
+
+    internal MainViewmodel MainViewmodel => (MainViewmodel) this.root.DataContext;
+
+    private async void TreeViewItem_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+    {
+        if (sender is TreeViewItem item && item.DataContext is ProjectEntry entry) {
+            var instanceTask = this.MainViewmodel.Project?.ProjectItemViewmodel.Open(entry);
+            if (instanceTask is null) {
+                return;
+            }
+            var instance = await instanceTask;
+            if (instance is null) {
+                return;
+            }
+            var editor = instance.CreateEditor();
+            this.editors.Add(editor);
+
+        }
+    }
 }

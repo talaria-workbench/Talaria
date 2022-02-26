@@ -8,6 +8,9 @@ public abstract class ComponentInstanceBase
     {
 
     }
+
+    public abstract IEditor CreateEditor();
+
 }
 
 

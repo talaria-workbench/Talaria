@@ -1,11 +1,14 @@
 ﻿using Microsoft.UI.Xaml;
 
+using System.ComponentModel;
+
 namespace Talaria.AddIn;
 
-public interface IEditor
+public interface IEditor : INotifyPropertyChanged
 {
-    ReadOnlySpan<string> FileEnding { get; }
-    DataTemplate Editor { get; }
-    Task<object> Open(Stream stream);
+    string Title { get; }
+    FrameworkElement Editor { get; }
+    Task SaveChanges();
+    bool IsDirty { get; }
 
 }

@@ -1,4 +1,6 @@
-﻿namespace Talaria.AddIn;
+﻿using System.Xml;
+
+namespace Talaria.AddIn;
 
 public abstract class ComponentBase : IComponentBase
 {
@@ -8,23 +10,47 @@ public abstract class ComponentBase : IComponentBase
 
     }
 
-    Task<ComponentInstanceBase> IComponentBase.Load(Stream stream) => this.InternalLoad(stream);
-    private protected abstract Task<ComponentInstanceBase> InternalLoad(Stream stream);
+    public Task<ComponentInstanceBase> Load(IDataReference stream) => this.InternalLoad(stream);
+    private protected abstract Task<ComponentInstanceBase> InternalLoad(IDataReference stream);
 }
 
-public interface IComponentBase
-{
-    Task<ComponentInstanceBase> Load(Stream stream);
-
-}
 public abstract class ComponentBase<This> : ComponentBase
     where This : ComponentBase<This>
 {
 
-    private protected sealed override async Task<ComponentInstanceBase> InternalLoad(Stream stream) => await this.Load(stream);
+    private protected sealed override async Task<ComponentInstanceBase> InternalLoad(IDataReference stream) => await this.Load(stream);
 
-    public abstract Task<ComponentInstanceBase<This>> Load(Stream stream);
+    public new abstract Task<ComponentInstanceBase<This>> Load(IDataReference stream);
 }
+
+
+public interface IComponentBase
+{
+    Task<ComponentInstanceBase> Load(IDataReference stream);
+
+}
+
+public interface IDataReference
+{
+    Task<Stream> OpenData();
+    Task SaveData(Stream stream);
+    public async Task<XmlDocument> OpenXml()
+    {
+        using var stream =await this.OpenData();
+        var doc = new XmlDocument();
+        doc.Load(stream);
+        return doc;
+    }
+    public async Task SaveXml(XmlDocument doc)
+    {
+
+        using var stream = new MemoryStream();
+        doc.Save(stream);
+        _ = stream.Seek(0, SeekOrigin.Begin);
+        await this.SaveData(stream);
+    }
+}
+
 
 public interface IMetadataComponent<TAtached>
     where TAtached : ComponentBase<TAtached>

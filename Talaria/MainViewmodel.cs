@@ -49,13 +49,20 @@ internal partial class ProjectEntry
     [SourceGenerators.AutoNotify]
     private string? name;
 
+    public string AbsolutePath { get; }
 
-    public ProjectEntry(ProjectEntry? parent, string name, bool isFolder)
+    public ProjectEntry(ProjectEntry? parent, string name, bool isFolder, DirectoryInfo projectFolder)
     {
         this.Parent = parent;
         this.Name = name;
         this.IsFolder = isFolder;
-        this.LocalPath = Path.Combine(parent?.LocalPath ?? "/", name);
+        this.LocalPath = Path.Combine(parent?.LocalPath ?? "/", name).Replace('\\', '/');
+
+        if (parent is null) {
+            this.AbsolutePath = Path.Combine(projectFolder.FullName, name);
+        } else {
+            this.AbsolutePath = Path.Combine(parent.AbsolutePath, name);
+        }
     }
 
     public ObservableCollection<ProjectEntry> Childrean { get; } = new ObservableCollection<ProjectEntry>();
@@ -89,7 +96,7 @@ internal partial class ProjectViewmodel : DependencyObject
         this.ProjectFolder = projectFile.Directory;
         this.ProjectItemViewmodel = new NewProjectItemViewmodel(this);
 
-        this.Root = new ProjectEntry(null, "", true);
+        this.Root = new ProjectEntry(null, "", true, this.ProjectFolder);
 
         this.Tree = new TreeViewmodel(this);
 
@@ -287,7 +294,7 @@ internal partial class ProjectViewmodel : DependencyObject
             }
             var parent = this.GetFromLocalPath(parentPath);
             var isFolder = Directory.Exists(fullPath);
-            var current = new ProjectEntry(parent,Path.GetFileName(localPath), isFolder);
+            var current = new ProjectEntry(parent,Path.GetFileName(localPath), isFolder, this.projectViewmodel.ProjectFolder);
             if (parent is not null) {
                 parent.Childrean.Add(current);
             }

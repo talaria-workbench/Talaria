@@ -3,6 +3,7 @@
 using Prism.Commands;
 
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Windows.Input;
 
@@ -12,22 +13,83 @@ namespace Talaria;
 
 internal partial class NewProjectItemViewmodel
 {
+    private class UnknownComponent : ComponentBase<UnknownComponent>
+    {
+        private UnknownComponent()
+        {
+
+        }
+        public static UnknownComponent Instance { get; } = new UnknownComponent();
+        public override async Task<ComponentInstanceBase<UnknownComponent>> Load(IDataReference stream) => new UnkwonInstance();
+
+
+        private class UnkwonInstance : ComponentInstanceBase<UnknownComponent>
+        {
+            public override IEditor CreateEditor() => new UnkwonEditor();
+        }
+        private class UnkwonEditor : IEditor
+        {
+            public string Title => "Unknown";
+
+            public FrameworkElement Editor { get; } = new Microsoft.UI.Xaml.Controls.TextBlock() { Text = "Unkown", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+
+            public bool IsDirty => false;
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            public Task SaveChanges() => Task.CompletedTask;
+        }
+    }
 
     [ImportMany(AllowRecomposition = true)]
     private readonly ObservableCollection<CreateItemBase> createableItems = new();
 
-
+    [ImportMany(AllowRecomposition = true)]
+    private readonly ObservableCollection<ComponentBase> components = new();
 
     public ReadOnlyObservableCollection<CreateItemBase> CreateableItems { get; }
+    public ReadOnlyObservableCollection<ComponentBase> Components { get; }
     public ProjectViewmodel ProjectViewmodel { get; }
 
     public NewProjectItemViewmodel(ProjectViewmodel projectViewmodel)
     {
         ExtensionHub.Import(this);
-        this.CreateableItems = new ReadOnlyObservableCollection<CreateItemBase>(this.createableItems);
+        this.CreateableItems = new(this.createableItems);
+        this.Components = new(this.components);
         this.ProjectViewmodel = projectViewmodel;
     }
 
+    private class DataReference : IDataReference
+    {
+        private ProjectEntry entry;
+
+        public DataReference(ProjectEntry entry)
+        {
+            this.entry = entry;
+        }
+
+        public Task<Stream> OpenData()
+        {
+            return Task.FromResult<Stream>(File.OpenRead(this.entry.AbsolutePath));
+        }
+
+        public async Task SaveData(Stream stream)
+        {
+            using var file = new FileStream(this.entry.AbsolutePath, FileMode.Create, FileAccess.Write);
+            await stream.CopyToAsync(file);
+        }
+    }
+
+    public async Task<ComponentInstanceBase> Open(ProjectEntry entry)
+    {
+        var posiibleComponents =this.Components.Where(x => x.FileEndings.Contains(Path.GetExtension(entry.Name) ?? string.Empty));
+        var component = posiibleComponents.SingleOrDefault();
+        var reference= new DataReference(entry);
+        if (component is null) {
+            return await UnknownComponent.Instance.Load(reference);
+        }
+        return await component.Load(reference);
+    }
 }
 
 internal partial class NewProjectItemElementViewmodel : DependencyObject

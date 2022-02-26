@@ -1,5 +1,7 @@
-﻿using Microsoft.UI.Xaml.Media;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 
 namespace Talaria.AddIn.Image;
@@ -68,4 +70,43 @@ public class ImageOptions : CreateItemOptions
             new TextOption("Filename"),
             new FileOption("Import Image", ".png")
         };
+}
+
+public class ImageEditor : IEditor
+{
+    public ImageEditor(IDataReference stream)
+    {
+        this.Data = stream;
+    }
+
+    public string Title => "Image";
+
+    public FrameworkElement Editor => new ImageControl(this);
+
+    public bool IsDirty => false;
+
+    public IDataReference Data { get; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public Task SaveChanges() => Task.CompletedTask;
+}
+
+public class ImageComponentInstance : ComponentInstanceBase<ImageComponent>
+{
+    private readonly  IDataReference stream;
+
+    public ImageComponentInstance(IDataReference stream)
+    {
+        this.stream = stream;
+    }
+
+    public override IEditor CreateEditor() => new ImageEditor(this.stream);
+}
+[Export(typeof(ComponentBase))]
+public class ImageComponent : ComponentBase<ImageComponent>
+{
+    private static readonly string[] fileEndings =new string[] { ".png" };
+    public override ReadOnlySpan<string> FileEndings => fileEndings.AsSpan();
+    public override Task<ComponentInstanceBase<ImageComponent>> Load(IDataReference stream) => Task.FromResult<ComponentInstanceBase<ImageComponent>>(new ImageComponentInstance(stream));
 }

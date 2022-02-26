@@ -4,25 +4,23 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Talaria"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls" xmlns:addin="using:Talaria.AddIn"
     mc:Ignorable="d">
-    <Border>
+    <Border >
         <Border.Resources>
             <local:MainViewmodel x:Key="mainViewmodel"/>
         </Border.Resources>
         <Grid x:Name="root" DataContext="{StaticResource mainViewmodel}">
-            <Grid.Resources>
-            </Grid.Resources>
-
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <controls:TabbedCommandBar Grid.ColumnSpan="2" >
+            <controls:TabbedCommandBar Grid.ColumnSpan="3" >
                 <controls:TabbedCommandBar.PaneFooter>
                     <CommandBar Background="Transparent" DefaultLabelPosition="Right">
                         <AppBarButton Label="Run" Icon="Play" />
@@ -39,7 +37,16 @@
 
 
 
-            <TabView x:Name="content" Grid.Row="1" Grid.Column="1" />
+            <TabView x:Name="content" Grid.Row="1" Grid.Column="2" TabItemsSource="{x:Bind Editors}"  >
+                <TabView.TabItemTemplate>
+                    <DataTemplate x:DataType="addin:IEditor">
+                        <TabViewItem Header="{x:Bind Title}">
+                            <Border Child="{x:Bind Editor}" />
+                        </TabViewItem>
+                    </DataTemplate>
+                </TabView.TabItemTemplate>
+
+            </TabView>
             <Grid Grid.Row="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -102,7 +109,7 @@
                 <TreeView x:Name="explorer" SelectedItem="{Binding Project.Tree.SelectedEntry, Mode=TwoWay}" Grid.Row="1"  ItemsSource="{Binding Project.Root.Childrean, Mode=OneWay}" >
                     <TreeView.ItemTemplate>
                         <DataTemplate x:DataType="local:ProjectEntry">
-                            <TreeViewItem ItemsSource="{x:Bind Childrean, Mode=OneWay}"   >
+                            <TreeViewItem ItemsSource="{x:Bind Childrean, Mode=OneWay}"  IsDoubleTapEnabled="True" DoubleTapped="TreeViewItem_DoubleTapped"  >
                                 <TextBlock Text="{x:Bind Name}" />
                             </TreeViewItem>
                         </DataTemplate>

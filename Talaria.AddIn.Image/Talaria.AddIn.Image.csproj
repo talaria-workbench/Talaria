@@ -12,8 +12,20 @@
 	  <EmbeddedResource Include="Resources\image_white_24dp.svg" />
 	</ItemGroup>
 
+
 	<ItemGroup>
 		<ProjectReference Include="..\Talaria.AddIn\Talaria.AddIn.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.0.0" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22000.194" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <None Update="ImageControl.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
 	</ItemGroup>
 
 </Project>
