@@ -57,7 +57,7 @@ public abstract class ComponentBase<TComponent, TInstance> : ComponentBase
 {
 
     [ImportMany(AllowRecomposition = true)]
-    private readonly List<ComponentLoaderBase<TComponent, TInstance>> loader = new();
+    private readonly HashSet<ComponentLoaderBase<TComponent, TInstance>> loader = new();
 
     public override async Task<bool> CanLoad(IDataReference reference)
     {

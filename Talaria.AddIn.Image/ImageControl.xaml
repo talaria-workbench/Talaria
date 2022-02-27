@@ -8,6 +8,6 @@
     mc:Ignorable="d">
 
     <Grid>
-        <Image Source="{x:Bind ImageSource}"/>
+        <Image Source="{x:Bind ImageSource, Mode=OneWay}"/>
     </Grid>
 </UserControl>

@@ -1,13 +1,13 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 using System.ComponentModel;
-using System.ComponentModel.Composition;
 
 namespace Talaria.AddIn.Image;
 
-[Export(typeof(CreateItemBase))]
-public class ImportImage : CreateItemBase
+
+public partial class ImportImage : CreateItemBase
 {
     public override string Label => "Import Image";
 
@@ -74,9 +74,10 @@ public class ImageOptions : CreateItemOptions
 
 public class ImageEditor : IEditor
 {
-    public ImageEditor(IDataReference stream)
+    public ImageEditor(IDataReference stream, IImageDecoder decoder)
     {
         this.Data = stream;
+        this.Decoder = decoder;
     }
 
     public string Title => "Image";
@@ -86,35 +87,61 @@ public class ImageEditor : IEditor
     public bool IsDirty => false;
 
     public IDataReference Data { get; }
+    public IImageDecoder Decoder { get; }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged { add { } remove { } }
 
     public Task SaveChanges() => Task.CompletedTask;
+}
+
+public interface IImageDecoder
+{
+    Task<ImageSource> GenerateImage(IDataReference reference);
+}
+internal class BitmapDecocder : IImageDecoder
+{
+    private static IImageDecoder? instance;
+
+    public static IImageDecoder Instance { get { return instance ??= new BitmapDecocder(); } }
+
+    private BitmapDecocder()
+    {
+
+    }
+
+    public async Task<ImageSource> GenerateImage(IDataReference reference)
+    {
+        var bit = new BitmapImage();
+        using var stream = await reference.OpenData();
+        await bit.SetSourceAsync(stream.AsRandomAccessStream());
+        return bit;
+    }
 }
 
 public class ImageInstance : InstanceBase<ImageComponent, ImageInstance>
 {
     private readonly IDataReference stream;
+    private readonly IImageDecoder decoder;
 
-    public ImageInstance(IDataReference stream)
+    public ImageInstance(IDataReference stream, IImageDecoder decoder)
     {
         this.stream = stream;
+        this.decoder = decoder;
     }
 
-    public override IEditor CreateEditor() => new ImageEditor(this.stream);
+    public override IEditor CreateEditor() => new ImageEditor(this.stream, this.decoder);
 }
 
-[Export(typeof(ComponentBase))]
-public class ImageComponent : ComponentBase<ImageComponent, ImageInstance>
+//[Export(typeof(ComponentBase))]
+public partial class ImageComponent : ComponentBase<ImageComponent, ImageInstance>
 {
 
 }
 
-
-[Export(typeof(ComponentLoaderBase<ImageComponent, ImageInstance>))]
-public class ImageLoader : ComponentLoaderBase<ImageComponent, ImageInstance>
+//[Export(typeof(ComponentLoaderBase<ImageComponent, ImageInstance>))]
+public partial class ImageLoader : ComponentLoaderBase<ImageComponent, ImageInstance>
 {
     private static readonly string[] fileEndings = new string[] { ".png" };
     public override ReadOnlySpan<string> FileEndings => fileEndings.AsSpan();
-    public override Task<InstanceBase<ImageComponent, ImageInstance>> Load(IDataReference stream) => Task.FromResult<InstanceBase<ImageComponent, ImageInstance>>(new ImageInstance(stream));
+    public override Task<InstanceBase<ImageComponent, ImageInstance>> Load(IDataReference stream) => Task.FromResult<InstanceBase<ImageComponent, ImageInstance>>(new ImageInstance(stream, BitmapDecocder.Instance));
 }
