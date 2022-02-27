@@ -14,7 +14,7 @@ namespace Talaria;
 internal partial class NewProjectItemViewmodel
 {
 
-    private class UnkwonInstance : ComponentInstanceBase<UnknownComponent, UnkwonInstance>
+    private class UnkwonInstance : InstanceBase<UnknownComponent, UnkwonInstance>
     {
         private readonly IDataReference reference;
 
@@ -62,7 +62,7 @@ internal partial class NewProjectItemViewmodel
 
         }
         public static UnknownComponent Instance { get; } = new UnknownComponent();
-        public override Task<ComponentInstanceBase?> TryLoad(IDataReference reference) => Task.FromResult<ComponentInstanceBase?>(new UnkwonInstance(reference));
+        public override Task<InstanceBase?> TryLoad(IDataReference reference) => Task.FromResult<InstanceBase?>(new UnkwonInstance(reference));
 
 
     }
@@ -110,7 +110,7 @@ internal partial class NewProjectItemViewmodel
         }
     }
 
-    public async Task<ComponentInstanceBase> Open(ProjectEntry entry)
+    public async Task<InstanceBase> Open(ProjectEntry entry)
     {
 
         var reference = new DataReference(entry);

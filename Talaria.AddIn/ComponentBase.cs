@@ -20,20 +20,20 @@ public abstract class ComponentLoaderBase
             : Task.FromResult(false);
 
     }
-    public Task<ComponentInstanceBase> Load(IDataReference reference) => this.InternalLoad(reference);
-    private protected abstract Task<ComponentInstanceBase> InternalLoad(IDataReference reference);
+    public Task<InstanceBase> Load(IDataReference reference) => this.InternalLoad(reference);
+    private protected abstract Task<InstanceBase> InternalLoad(IDataReference reference);
 
 
 }
 public abstract class ComponentLoaderBase<TComponent, TInstance> : ComponentLoaderBase
     where TComponent : ComponentBase<TComponent, TInstance>
-    where TInstance : ComponentInstanceBase<TComponent, TInstance>
+    where TInstance : InstanceBase<TComponent, TInstance>
 {
 
-    private protected sealed override async Task<ComponentInstanceBase> InternalLoad(IDataReference reference) => await this.Load(reference);
+    private protected sealed override async Task<InstanceBase> InternalLoad(IDataReference reference) => await this.Load(reference);
 
 
-    public new abstract Task<ComponentInstanceBase<TComponent, TInstance>> Load(IDataReference reference);
+    public new abstract Task<InstanceBase<TComponent, TInstance>> Load(IDataReference reference);
 
 }
 
@@ -46,14 +46,14 @@ public abstract class ComponentBase : IComponentBase
 
     public abstract Task<bool> CanLoad(IDataReference reference);
 
-    public virtual Task<ComponentInstanceBase?> TryLoad(IDataReference reference) => this.InternalLoad(reference);
-    public async Task<ComponentInstanceBase> Load(IDataReference reference) => (await this.TryLoad(reference)) ?? throw new ArgumentException($"Cant load {reference} with {this}");
-    private protected abstract Task<ComponentInstanceBase?> InternalLoad(IDataReference reference);
+    public virtual Task<InstanceBase?> TryLoad(IDataReference reference) => this.InternalLoad(reference);
+    public async Task<InstanceBase> Load(IDataReference reference) => (await this.TryLoad(reference)) ?? throw new ArgumentException($"Cant load {reference} with {this}");
+    private protected abstract Task<InstanceBase?> InternalLoad(IDataReference reference);
 }
 
 public abstract class ComponentBase<TComponent, TInstance> : ComponentBase
     where TComponent : ComponentBase<TComponent, TInstance>
-    where TInstance : ComponentInstanceBase<TComponent, TInstance>
+    where TInstance : InstanceBase<TComponent, TInstance>
 {
 
     [ImportMany(AllowRecomposition = true)]
@@ -66,7 +66,7 @@ public abstract class ComponentBase<TComponent, TInstance> : ComponentBase
         return component != null;
     }
 
-    private protected override async Task<ComponentInstanceBase?> InternalLoad(IDataReference reference)
+    private protected override async Task<InstanceBase?> InternalLoad(IDataReference reference)
     {
 
         var posiibleComponents = this.loader.ToAsyncEnumerable().WhereAwait(async x => await x.CanLoad(reference));
@@ -80,8 +80,8 @@ public abstract class ComponentBase<TComponent, TInstance> : ComponentBase
 
 public interface IComponentBase
 {
-    Task<ComponentInstanceBase?> TryLoad(IDataReference reference);
-    Task<ComponentInstanceBase> Load(IDataReference reference);
+    Task<InstanceBase?> TryLoad(IDataReference reference);
+    Task<InstanceBase> Load(IDataReference reference);
     Task<bool> CanLoad(IDataReference reference);
 
 

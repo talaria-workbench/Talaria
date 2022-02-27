@@ -1,8 +1,8 @@
 ﻿namespace Talaria.AddIn;
 
-public abstract class ComponentInstanceBase
+public abstract class InstanceBase
 {
-    private protected ComponentInstanceBase()
+    private protected InstanceBase()
     {
 
     }
@@ -12,9 +12,9 @@ public abstract class ComponentInstanceBase
 }
 
 
-public abstract class ComponentInstanceBase<TComponent, TInstance> : ComponentInstanceBase
+public abstract class InstanceBase<TComponent, TInstance> : InstanceBase
     where TComponent : ComponentBase<TComponent, TInstance>
-    where TInstance : ComponentInstanceBase<TComponent, TInstance>
+    where TInstance : InstanceBase<TComponent, TInstance>
 {
     // TODO: Reactiate Subcomponents
     //public ObservableCollection<IMetadataComponent<TComponent>> Metadata { get; } = new();

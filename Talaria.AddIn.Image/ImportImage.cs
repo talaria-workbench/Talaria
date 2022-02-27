@@ -92,7 +92,7 @@ public class ImageEditor : IEditor
     public Task SaveChanges() => Task.CompletedTask;
 }
 
-public class ImageInstance : ComponentInstanceBase<ImageComponent, ImageInstance>
+public class ImageInstance : InstanceBase<ImageComponent, ImageInstance>
 {
     private readonly IDataReference stream;
 
@@ -116,5 +116,5 @@ public class ImageLoader : ComponentLoaderBase<ImageComponent, ImageInstance>
 {
     private static readonly string[] fileEndings = new string[] { ".png" };
     public override ReadOnlySpan<string> FileEndings => fileEndings.AsSpan();
-    public override Task<ComponentInstanceBase<ImageComponent, ImageInstance>> Load(IDataReference stream) => Task.FromResult<ComponentInstanceBase<ImageComponent, ImageInstance>>(new ImageInstance(stream));
+    public override Task<InstanceBase<ImageComponent, ImageInstance>> Load(IDataReference stream) => Task.FromResult<InstanceBase<ImageComponent, ImageInstance>>(new ImageInstance(stream));
 }
