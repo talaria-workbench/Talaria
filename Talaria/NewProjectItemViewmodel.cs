@@ -14,29 +14,19 @@ namespace Talaria;
 internal partial class NewProjectItemViewmodel
 {
 
-    private class UnknownComponent : ComponentBase<UnknownComponent>
+    private class UnkwonInstance : ComponentInstanceBase<UnknownComponent, UnkwonInstance>
     {
-        private UnknownComponent()
+        private readonly IDataReference reference;
+
+        public UnkwonInstance(IDataReference reference)
         {
-
+            this.reference = reference;
         }
-        public static UnknownComponent Instance { get; } = new UnknownComponent();
-        public override Task<ComponentInstanceBase?> TryLoad(IDataReference reference) => Task.FromResult<ComponentInstanceBase?>(new UnkwonInstance(reference));
 
-        private class UnkwonInstance : ComponentInstanceBase<UnknownComponent>
-        {
-            private IDataReference reference;
-
-            public UnkwonInstance(IDataReference reference)
-            {
-                this.reference = reference;
-            }
-
-            public override IEditor CreateEditor() => new UnkwonEditor(this.reference);
-        }
+        public override IEditor CreateEditor() => new UnkwonEditor(this.reference);
         private class UnkwonEditor : IEditor
         {
-            private IDataReference reference;
+            private readonly IDataReference reference;
 
             public UnkwonEditor(IDataReference reference)
             {
@@ -65,6 +55,18 @@ internal partial class NewProjectItemViewmodel
         }
     }
 
+    private class UnknownComponent : ComponentBase<UnknownComponent, UnkwonInstance>
+    {
+        private UnknownComponent()
+        {
+
+        }
+        public static UnknownComponent Instance { get; } = new UnknownComponent();
+        public override Task<ComponentInstanceBase?> TryLoad(IDataReference reference) => Task.FromResult<ComponentInstanceBase?>(new UnkwonInstance(reference));
+
+
+    }
+
     [ImportMany(AllowRecomposition = true)]
     private readonly ObservableCollection<CreateItemBase> createableItems = new();
 
@@ -85,7 +87,7 @@ internal partial class NewProjectItemViewmodel
 
     private class DataReference : IFileDataReference
     {
-        private ProjectEntry entry;
+        private readonly ProjectEntry entry;
 
         public DataReference(ProjectEntry entry)
         {

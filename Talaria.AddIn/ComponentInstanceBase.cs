@@ -1,6 +1,4 @@
-﻿using System.Collections.ObjectModel;
-
-namespace Talaria.AddIn;
+﻿namespace Talaria.AddIn;
 
 public abstract class ComponentInstanceBase
 {
@@ -14,9 +12,11 @@ public abstract class ComponentInstanceBase
 }
 
 
-public abstract class ComponentInstanceBase<TComponent> : ComponentInstanceBase
-    where TComponent : ComponentBase<TComponent>
+public abstract class ComponentInstanceBase<TComponent, TInstance> : ComponentInstanceBase
+    where TComponent : ComponentBase<TComponent, TInstance>
+    where TInstance : ComponentInstanceBase<TComponent, TInstance>
 {
-    public ObservableCollection<IMetadataComponent<TComponent>> Metadata { get; } = new();
+    // TODO: Reactiate Subcomponents
+    //public ObservableCollection<IMetadataComponent<TComponent>> Metadata { get; } = new();
 
 }

@@ -25,14 +25,15 @@ public abstract class ComponentLoaderBase
 
 
 }
-public abstract class ComponentLoaderBase<TComponent> : ComponentLoaderBase
-    where TComponent : ComponentBase<TComponent>
+public abstract class ComponentLoaderBase<TComponent, TInstance> : ComponentLoaderBase
+    where TComponent : ComponentBase<TComponent, TInstance>
+    where TInstance : ComponentInstanceBase<TComponent, TInstance>
 {
 
     private protected sealed override async Task<ComponentInstanceBase> InternalLoad(IDataReference reference) => await this.Load(reference);
 
 
-    public new abstract Task<ComponentInstanceBase<TComponent>> Load(IDataReference reference);
+    public new abstract Task<ComponentInstanceBase<TComponent, TInstance>> Load(IDataReference reference);
 
 }
 
@@ -50,12 +51,13 @@ public abstract class ComponentBase : IComponentBase
     private protected abstract Task<ComponentInstanceBase?> InternalLoad(IDataReference reference);
 }
 
-public abstract class ComponentBase<This> : ComponentBase
-    where This : ComponentBase<This>
+public abstract class ComponentBase<TComponent, TInstance> : ComponentBase
+    where TComponent : ComponentBase<TComponent, TInstance>
+    where TInstance : ComponentInstanceBase<TComponent, TInstance>
 {
 
     [ImportMany(AllowRecomposition = true)]
-    private readonly List<ComponentLoaderBase<This>> loader = new();
+    private readonly List<ComponentLoaderBase<TComponent, TInstance>> loader = new();
 
     public override async Task<bool> CanLoad(IDataReference reference)
     {
@@ -109,18 +111,4 @@ public interface IFileDataReference : IDataReference
 {
     string Name { get; }
     string LocalPath { get; }
-}
-
-
-public interface IMetadataComponent<TAtached>
-    where TAtached : ComponentBase<TAtached>
-{
-    TAtached AttachedTo { get; }
-}
-
-public abstract class MetadataComponentBase<This, TAtached> : ComponentBase<This>, IMetadataComponent<TAtached>
-    where This : MetadataComponentBase<This, TAtached>
-    where TAtached : ComponentBase<TAtached>
-{
-    public abstract TAtached AttachedTo { get; }
 }

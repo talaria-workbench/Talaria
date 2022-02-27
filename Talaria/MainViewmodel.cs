@@ -110,8 +110,8 @@ internal partial class ProjectViewmodel : DependencyObject
 
     private class Context : IEditorContext
     {
-        private ProjectViewmodel projectViewmodel;
-        private ProjectEntry? entry;
+        private readonly ProjectViewmodel projectViewmodel;
+        private readonly ProjectEntry? entry;
 
         public Context(ProjectViewmodel projectViewmodel, ProjectEntry? entry)
         {

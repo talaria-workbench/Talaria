@@ -92,11 +92,11 @@ public class ImageEditor : IEditor
     public Task SaveChanges() => Task.CompletedTask;
 }
 
-public class ImageComponentInstance : ComponentInstanceBase<ImageComponent>
+public class ImageInstance : ComponentInstanceBase<ImageComponent, ImageInstance>
 {
     private readonly IDataReference stream;
 
-    public ImageComponentInstance(IDataReference stream)
+    public ImageInstance(IDataReference stream)
     {
         this.stream = stream;
     }
@@ -105,16 +105,16 @@ public class ImageComponentInstance : ComponentInstanceBase<ImageComponent>
 }
 
 [Export(typeof(ComponentBase))]
-public class ImageComponent : ComponentBase<ImageComponent>
+public class ImageComponent : ComponentBase<ImageComponent, ImageInstance>
 {
 
 }
 
 
-[Export(typeof(ComponentLoaderBase<ImageComponent>))]
-public class ImageLoader : ComponentLoaderBase<ImageComponent>
+[Export(typeof(ComponentLoaderBase<ImageComponent, ImageInstance>))]
+public class ImageLoader : ComponentLoaderBase<ImageComponent, ImageInstance>
 {
     private static readonly string[] fileEndings = new string[] { ".png" };
     public override ReadOnlySpan<string> FileEndings => fileEndings.AsSpan();
-    public override Task<ComponentInstanceBase<ImageComponent>> Load(IDataReference stream) => Task.FromResult<ComponentInstanceBase<ImageComponent>>(new ImageComponentInstance(stream));
+    public override Task<ComponentInstanceBase<ImageComponent, ImageInstance>> Load(IDataReference stream) => Task.FromResult<ComponentInstanceBase<ImageComponent, ImageInstance>>(new ImageInstance(stream));
 }
