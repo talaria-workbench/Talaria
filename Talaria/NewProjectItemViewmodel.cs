@@ -13,6 +13,7 @@ namespace Talaria;
 
 internal partial class NewProjectItemViewmodel
 {
+
     private class UnknownComponent : ComponentBase<UnknownComponent>
     {
         private UnknownComponent()
@@ -20,22 +21,45 @@ internal partial class NewProjectItemViewmodel
 
         }
         public static UnknownComponent Instance { get; } = new UnknownComponent();
-        public override async Task<ComponentInstanceBase<UnknownComponent>> Load(IDataReference stream) => new UnkwonInstance();
-
+        public override Task<ComponentInstanceBase?> TryLoad(IDataReference reference) => Task.FromResult<ComponentInstanceBase?>(new UnkwonInstance(reference));
 
         private class UnkwonInstance : ComponentInstanceBase<UnknownComponent>
         {
-            public override IEditor CreateEditor() => new UnkwonEditor();
+            private IDataReference reference;
+
+            public UnkwonInstance(IDataReference reference)
+            {
+                this.reference = reference;
+            }
+
+            public override IEditor CreateEditor() => new UnkwonEditor(this.reference);
         }
         private class UnkwonEditor : IEditor
         {
-            public string Title => "Unknown";
+            private IDataReference reference;
 
-            public FrameworkElement Editor { get; } = new Microsoft.UI.Xaml.Controls.TextBlock() { Text = "Unkown", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            public UnkwonEditor(IDataReference reference)
+            {
+                this.reference = reference;
+                this.Editor = new Microsoft.UI.Xaml.Controls.TextBlock()
+                {
+                    Text = this.reference is IFileDataReference file ?
+                $"{file.LocalPath} is an Unkown Type"
+                : "Unkown",
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+            }
+
+            public string Title => this.reference is IFileDataReference file
+                ? file.Name
+                : "Unkown";
+
+            public FrameworkElement Editor { get; }
 
             public bool IsDirty => false;
 
-            public event PropertyChangedEventHandler? PropertyChanged;
+            event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged { add { } remove { } }
 
             public Task SaveChanges() => Task.CompletedTask;
         }
@@ -59,7 +83,7 @@ internal partial class NewProjectItemViewmodel
         this.ProjectViewmodel = projectViewmodel;
     }
 
-    private class DataReference : IDataReference
+    private class DataReference : IFileDataReference
     {
         private ProjectEntry entry;
 
@@ -67,6 +91,10 @@ internal partial class NewProjectItemViewmodel
         {
             this.entry = entry;
         }
+
+        public string Name => this.entry.Name ?? "";
+
+        public string LocalPath => this.entry.LocalPath;
 
         public Task<Stream> OpenData()
         {
@@ -82,13 +110,13 @@ internal partial class NewProjectItemViewmodel
 
     public async Task<ComponentInstanceBase> Open(ProjectEntry entry)
     {
-        var posiibleComponents =this.Components.Where(x => x.FileEndings.Contains(Path.GetExtension(entry.Name) ?? string.Empty));
-        var component = posiibleComponents.SingleOrDefault();
-        var reference= new DataReference(entry);
-        if (component is null) {
-            return await UnknownComponent.Instance.Load(reference);
-        }
-        return await component.Load(reference);
+
+        var reference = new DataReference(entry);
+        var posiibleComponents = this.Components.ToAsyncEnumerable().WhereAwait(async x => await x.CanLoad(reference));
+        var component = await posiibleComponents.SingleOrDefaultAsync();
+        return component is not null
+            ? await component.Load(reference)
+            : await UnknownComponent.Instance.Load(reference);
     }
 }
 
@@ -127,7 +155,7 @@ internal partial class NewProjectItemElementViewmodel : DependencyObject
 
     private static void CreateItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        var me = (NewProjectItemElementViewmodel)d;
+        var me = (NewProjectItemElementViewmodel) d;
         ((DelegateCommand<ProjectEntry?>) me.ExecuteCommand).RaiseCanExecuteChanged();
 
     }

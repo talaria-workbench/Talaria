@@ -27,8 +27,8 @@ public class ImportImage : CreateItemBase
     {
         var context = options.Context;
         var config = options.GetConfiguration();
-        var filename = ((Configuration<string>)config[0]).Value;
-        var source = ((Configuration<FileInfo>)config[1]).Value;
+        var filename = ((Configuration<string>) config[0]).Value;
+        var source = ((Configuration<FileInfo>) config[1]).Value;
 
         var filePath = filename + source.Extension;
         using var destinationStream = await context.CreateFileStream(filePath);
@@ -94,7 +94,7 @@ public class ImageEditor : IEditor
 
 public class ImageComponentInstance : ComponentInstanceBase<ImageComponent>
 {
-    private readonly  IDataReference stream;
+    private readonly IDataReference stream;
 
     public ImageComponentInstance(IDataReference stream)
     {
@@ -103,10 +103,18 @@ public class ImageComponentInstance : ComponentInstanceBase<ImageComponent>
 
     public override IEditor CreateEditor() => new ImageEditor(this.stream);
 }
+
 [Export(typeof(ComponentBase))]
 public class ImageComponent : ComponentBase<ImageComponent>
 {
-    private static readonly string[] fileEndings =new string[] { ".png" };
+
+}
+
+
+[Export(typeof(ComponentLoaderBase<ImageComponent>))]
+public class ImageLoader : ComponentLoaderBase<ImageComponent>
+{
+    private static readonly string[] fileEndings = new string[] { ".png" };
     public override ReadOnlySpan<string> FileEndings => fileEndings.AsSpan();
     public override Task<ComponentInstanceBase<ImageComponent>> Load(IDataReference stream) => Task.FromResult<ComponentInstanceBase<ImageComponent>>(new ImageComponentInstance(stream));
 }
