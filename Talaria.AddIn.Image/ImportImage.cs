@@ -6,7 +6,8 @@ using System.ComponentModel;
 
 namespace Talaria.AddIn.Image;
 
-
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.Image.ImportImage))]
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.CreateItemBase))]
 public partial class ImportImage : CreateItemBase
 {
     public override string Label => "Import Image";
@@ -132,13 +133,17 @@ public class ImageInstance : InstanceBase<ImageComponent, ImageInstance>
     public override IEditor CreateEditor() => new ImageEditor(this.stream, this.decoder);
 }
 
-//[Export(typeof(ComponentBase))]
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.Image.ImageComponent))]
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.ComponentBase<Talaria.AddIn.Image.ImageComponent, Talaria.AddIn.Image.ImageInstance>))]
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.ComponentBase))]
 public partial class ImageComponent : ComponentBase<ImageComponent, ImageInstance>
 {
 
 }
 
-//[Export(typeof(ComponentLoaderBase<ImageComponent, ImageInstance>))]
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.Image.ImageLoader))]
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.ComponentLoaderBase<Talaria.AddIn.Image.ImageComponent, Talaria.AddIn.Image.ImageInstance>))]
+//[System.ComponentModel.Composition.Export(typeof(Talaria.AddIn.ComponentLoaderBase))]
 public partial class ImageLoader : ComponentLoaderBase<ImageComponent, ImageInstance>
 {
     private static readonly string[] fileEndings = new string[] { ".png" };

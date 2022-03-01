@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.Composition;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel.Composition;
 using System.Xml;
 
 namespace Talaria.AddIn;
@@ -56,8 +57,8 @@ public abstract class ComponentBase<TComponent, TInstance> : ComponentBase
     where TInstance : InstanceBase<TComponent, TInstance>
 {
 
-    [ImportMany(AllowRecomposition = true)]
-    private readonly HashSet<ComponentLoaderBase<TComponent, TInstance>> loader = new();
+    [ImportMany(AllowRecomposition = true, RequiredCreationPolicy = CreationPolicy.Shared, Source = ImportSource.Any)]
+    private readonly ObservableCollection<ComponentLoaderBase<TComponent, TInstance>> loader = new();
 
     public override async Task<bool> CanLoad(IDataReference reference)
     {

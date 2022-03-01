@@ -62,10 +62,9 @@ public class Generator : ISourceGenerator
             // We already checked that basetype is not null in SyntaxReciver
             var source = SyntaxReceiver.GetUnboundName(c.BaseType!) switch
             {
-                SyntaxReceiver.CREATE_ITEM_TYPE => ProcessClass(c, _ => "[System.ComponentModel.Composition.Export]"),
-                SyntaxReceiver.COMPONENT_BASE_TYPE => ProcessClass(c, _ => $@"[System.ComponentModel.Composition.Export]"),
-                SyntaxReceiver.LOADER_BASE_TYPE => ProcessClass(c, _ => $@"
-[System.ComponentModel.Composition.Export]"),
+                SyntaxReceiver.CREATE_ITEM_TYPE => ProcessClass(c, _ => GenerateAttributesIncludingBaseClass(c)),
+                SyntaxReceiver.COMPONENT_BASE_TYPE => ProcessClass(c, _ => GenerateAttributesIncludingBaseClass(c)),
+                SyntaxReceiver.LOADER_BASE_TYPE => ProcessClass(c, _ => GenerateAttributesIncludingBaseClass(c)),
                 _ => null
             };
             if (source is not null) {
@@ -84,6 +83,19 @@ public class Generator : ISourceGenerator
             }
 
         }
+    }
+
+    private static string GenerateAttributesIncludingBaseClass(INamedTypeSymbol? c)
+    {
+        var attributes = new StringBuilder();
+        while (c is not null && c.ToDisplayString() != "object") {
+            //if (c.IsGenericType) {
+            //    _ = attributes.AppendLine($"[System.ComponentModel.Composition.Export(typeof({c.ConstructUnboundGenericType().ToDisplayString()}))]");
+            //}
+            _ = attributes.AppendLine($"[System.ComponentModel.Composition.Export(typeof({c.ToDisplayString()}))]");
+            c = c.BaseType;
+        }
+        return attributes.ToString();
     }
 
     private static string? ProcessClass(INamedTypeSymbol classSymbol, Func<INamedTypeSymbol, string>? generateAttributes = null, Func<INamedTypeSymbol, string>? generateBody = null)
@@ -179,10 +191,22 @@ internal class SyntaxReceiver : ISyntaxContextReceiver
     {
         // any field with at least one attribute is a candidate for property generation
         if (context.Node is ClassDeclarationSyntax classDeclarationSyntax) {
-            if (context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax) is INamedTypeSymbol classSymbol && classSymbol.BaseType is not null && metadataNames.Contains(GetUnboundName(classSymbol.BaseType))) {
+            if (context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax) is INamedTypeSymbol classSymbol && !classSymbol.IsAbstract && classSymbol.BaseType is not null && IsDecendantOfAny(classSymbol)) {
                 this.Classes.Add(classSymbol);
             }
         }
+    }
+
+    private static bool IsDecendantOfAny(INamedTypeSymbol classSymbol)
+    {
+        var baseType = classSymbol.BaseType;
+        while (baseType is not null) {
+            if (metadataNames.Contains(GetUnboundName(baseType))) {
+                return true;
+            }
+            baseType = baseType.BaseType;
+        }
+        return false;
     }
 
     public static string? GetUnboundName(INamedTypeSymbol classSymbol) =>

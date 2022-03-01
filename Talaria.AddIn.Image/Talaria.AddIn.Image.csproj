@@ -14,7 +14,7 @@
 
 
 	<ItemGroup>
-		<ProjectReference Include="..\Talaria.AddIn.Generator\Talaria.AddIn.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
+		<ProjectReference Include="..\Talaria.AddIn.Generator\Talaria.AddIn.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="none" />
 		<ProjectReference Include="..\Talaria.AddIn\Talaria.AddIn.csproj" />
 	</ItemGroup>
 
