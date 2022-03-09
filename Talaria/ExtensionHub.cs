@@ -14,9 +14,10 @@ internal static class ExtensionHub
         if (container is null) {
 
             catalog = new AggregateCatalog();
-            container = new CompositionContainer(catalog);
+            container = new CompositionContainer(catalog, CompositionOptions.DisableSilentRejection);
             // TODO: Load assemblys dynamic from folder
             catalog.Catalogs.Add(new AssemblyCatalog(typeof(AddIn.Image.ImportImage).Assembly));
+            catalog.Catalogs.Add(new AssemblyCatalog(typeof(AddIn.Tilesets.CreateImageTileset).Assembly));
         }
         container.ComposeParts(satisfyImports);
     }

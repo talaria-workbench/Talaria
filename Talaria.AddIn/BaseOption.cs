@@ -97,6 +97,22 @@ public sealed class TextOption : BaseOption<string>
     }
 }
 
+public sealed class ReferenceInstanceOption<TComponent, TInstance> : BaseOption<TInstance>
+    where TInstance : InstanceBase<TComponent, TInstance>
+    where TComponent : ComponentBase<TComponent, TInstance>
+{
+    public ReferenceInstanceOption(string label) : base(null, label)
+    {
+    }
+}
+public sealed class ReferenceComponentOption<TComponent, TInstance> : BaseOption<TComponent>
+    where TInstance : InstanceBase<TComponent, TInstance>
+    where TComponent : ComponentBase<TComponent, TInstance>
+{
+    public ReferenceComponentOption(string label) : base(null, label)
+    {
+    }
+}
 public sealed class FileOption : BaseOption<FileInfo>
 {
     public FileOption(string label, params string[]? validExtensions) : base(null, label)
@@ -109,6 +125,16 @@ public sealed class FileOption : BaseOption<FileInfo>
 public sealed class RangeOption : BaseOption<Range>
 {
     public RangeOption(string label, Range initialValue) : base(initialValue, label)
+    {
+    }
+}
+public sealed class IntOption : BaseOption<int>
+{
+    public int? Min { get; }
+    public int? Max { get; }
+
+
+    public IntOption(string label, int? initialValue = null, int? min = null, int? max = null) : base(initialValue ?? min ?? max ?? 0, label)
     {
     }
 }

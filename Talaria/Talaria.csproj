@@ -43,6 +43,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Talaria.AddIn.Image\Talaria.AddIn.Image.csproj" />
+		<ProjectReference Include="..\Talaria.AddIn.Tilesets\Talaria.AddIn.Tilesets.csproj" />
 		<ProjectReference Include="..\Talaria.AddIn\Talaria.AddIn.csproj" />
 	</ItemGroup>
 	<ItemGroup>
